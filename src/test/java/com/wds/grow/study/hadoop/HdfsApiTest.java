@@ -2,12 +2,12 @@ package com.wds.grow.study.hadoop;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.util.Arrays;
 
@@ -55,7 +55,8 @@ public class HdfsApiTest {
     }
 
     /**
-     * 上传本地文件
+     * 上传本地文件(写入数据)
+     * ps: FSDataOutputStream 只支持追加到文件末尾
      */
     @Test
     public void uploadFile() throws IOException {
@@ -64,24 +65,68 @@ public class HdfsApiTest {
 
         Path path = new Path(fileUri);
         FSDataOutputStream outputStream = fileSystem.create(path, true);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(content.getBytes());
-        // auto close stream
+        InputStream inputStream = new ByteArrayInputStream(content.getBytes());
         IOUtils.copyBytes(inputStream, outputStream, 1024, true);
 
         assertEquals(true, fileSystem.exists(path));
     }
 
     /**
-     * 下载hdfs文件
+     * 写入数据，回调
+     * 触发一次progress（）：每次将64KB数据包写入datanode管线
+     */
+    @Test
+    public void uploadFileWithProgress() throws IOException {
+        String fileUri = "/hadoopLearning/test/test1.txt";
+        String content = String.format("Hello world.Yeah, %s.So nice to meet u.", "wds");
+        InputStream inputStream = new BufferedInputStream(new ByteArrayInputStream(content.getBytes()));
+
+        Path path = new Path(fileUri);
+        OutputStream outputStream = fileSystem.create(path, () -> System.out.print("."));
+        IOUtils.copyBytes(inputStream, outputStream, 1024, true);
+
+        assertEquals(true, fileSystem.exists(path));
+    }
+
+    /**
+     * 下载数据（读取数据）
+     * ps： FSDataInputStream 支持随机访问
      */
     @Test
     public void downloadFile() throws Exception {
         String fileUri = "/hadoopLearning/test/test.txt";
         Path path = new Path(fileUri);
+        FSDataInputStream inputStream = null;
 
-        if(fileSystem.exists(path)){
-            FSDataInputStream inputStream = fileSystem.open(path);
-            IOUtils.copyBytes(inputStream, System.out, 1024, true);
+        try {
+            if(fileSystem.exists(path)){
+                inputStream = fileSystem.open(path);
+                IOUtils.copyBytes(inputStream, System.out, 1024, false);
+            }
+        }finally {
+            IOUtils.closeStream(inputStream);
+        }
+    }
+
+    /**
+     * 随机下载（读取）数据
+     * @throws Exception
+     */
+    @Test
+    public void downloadFileBySeek() throws Exception {
+        String fileUri = "/hadoopLearning/test/test.txt";
+        Path path = new Path(fileUri);
+        FSDataInputStream inputStream = null;
+
+        try {
+            if(fileSystem.exists(path)){
+                inputStream = fileSystem.open(path);
+                IOUtils.copyBytes(inputStream, System.out, 1024, false);
+                inputStream.seek(2);
+                IOUtils.copyBytes(inputStream, System.out, 1024, false);
+            }
+        }finally {
+            IOUtils.closeStream(inputStream);
         }
     }
 
