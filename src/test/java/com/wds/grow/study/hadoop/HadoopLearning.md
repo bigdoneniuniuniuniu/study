@@ -30,10 +30,26 @@ HDFS称为分布式文件系统（Hadoop Distributed Filesystem），有时也�
 		datenode（工作节点）：根据需要存储并检索数据块（受客户端/namenode的调度），并定期向namenode汇报所存储的块的列表。
 	```
 
-3. 交互流程示意
-
-	![aa](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/客户端读取HDFS流程.png)
-
+3. 交互流程示意图
+	* 客户端读取HDFS文件流程
+		![客户端读取HDFS流程](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/客户端读取HDFS流程.png)
+		- 步骤1:调用FileSystem的open()打开希望读取的文件。
+		- 步骤2:DistributedFileSystem通过rpc调用namenode，确定文件起始块的位置。对于每个块，namenode返回存有该块副本的datanode的地址。此外，datanode根据它们与客户端的距离来排序。然后返回FSDataInputStream给客户端。
+		- 步骤3:FSDataInputStream调用read()。
+		- 步骤4:连接距离最近的文件中的第一个块所在的datanode，通过对数据流反复调用read()，将数据传输到客户端。
+		- 步骤5:达到块的末端时，DFSInputStream关闭与该datanode的连接，然后寻找下一个块的最佳datanode。
+		- 步骤6:客户端完成读取，close()。
+		
+	* 客户端写入HDFS流程图
+		![客户端写入HDFS](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/客户端将数据写入HDFS.png)
+		- 步骤1:DistributedFileSystem调用create()
+		- 步骤2:DistributedFileSystem发起rpc调用，在确保该文件夹不存在且客户端有新建该文件夹的权限的一系列校验后，namenode会为创建新文件记录一天记录，并返回FSDataPutputStream对象。
+		- 步骤3:客户端调用write()。
+		- 步骤4：DFSOutputStream将它分成一个个数据包，写入数据队列。DataStreamer挑选出适合存储数据副本的一组datanode。这一组datanode构成一个管线。假设副本数为3，DataStreamer将数据包流式依次从第一个datanode传输到第三个datanode。
+		- 步骤5:DFSOutputStream维护着确认队列，等收到管道中所有datanode的确认信息后，数据包才会从确认队列中删除。
+		- 步骤6:完成数据写入后，close()。
+		- 步骤7:告知namenode文件写入完成。
+	
 ### 搭建
 系统和软件 | 版本号 | 数量
 ----------- | ------- | ---
