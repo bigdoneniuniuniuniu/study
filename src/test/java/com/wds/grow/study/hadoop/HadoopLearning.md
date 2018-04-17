@@ -1,4 +1,3 @@
-
 # Apache Hadoop Learning
 [TOC]
 
@@ -224,7 +223,33 @@ hive | 2.3.3 |
 	* 在mysql上查看是否成功
 6. 启动hive
 	* ./hive --service hiveserver2 &
-### shell命令
+### hive命令
+1. DDL(data definition language)操作
+	* 建表
+		CREATE [EXTERNAL] TABLE [IF NOT EXISTS] table_name 
+  [(col_name data_type [COMMENT col_comment], ...)] 
+  [COMMENT table_comment] 
+  [PARTITIONED BY (col_name data_type [COMMENT col_comment], ...)] 
+  [CLUSTERED BY (col_name, col_name, ...) 
+  [SORTED BY (col_name [ASC|DESC], ...)] INTO num_buckets BUCKETS] 
+  [ROW FORMAT row_format] 
+  [STORED AS file_format] 
+  [LOCATION hdfs_path]
+  		- EXTERNAL：可以让用户创建一个外部表，在建表的同时指定一个指向实际数据的路径（LOCATION）
+  		- ROW FORMAT：
+  			
+  			DELIMITED [FIELDS TERMINATED BY char] [COLLECTION ITEMS TERMINATED BY char][MAP KEYS TERMINATED BY char] [LINES TERMINATED BY char]| SERDE serde_name [WITH SERDEPROPERTIES (property_name=property_value, property_name=property_value, ...)]
+  		- PARTITIONED BY：指定分区信息
+  		- CLUSTERED BY：针对某一列分桶，采用对列值进行哈希，然后除以桶的个数求余的方式决定该条记录存放在哪个桶当中。更细粒度地划分数据。
+  		- 5、 STORED AS SEQUENCEFILE | TEXTFILE| RCFILE。如果文件数据是纯文本，可以使用TEXTFILE。如果数据需要压缩，使用SEQUENCEFILE。
+  	case：
+  	```
+  		CREATE TABLE par(userid BIGINT, time INT, page_url STRING, referrer_url STRING, ip STRING COMMENT 'IP Address of the User') COMMENT 'This is the page view table' PARTITIONED BY(dt STRING) CLUSTERED BY(userid) SORTED BY(time) INTO 32 BUCKETS ROW FORMAT DELIMITED FIELDS TERMINATED BY ' '  LINES TERMINATED BY '\n' STORED AS TEXTFILE;
+  	```
+2. DML(data mainpulation language)操作
+	* 加载本地文件
+		load data local inpath '/Users/hadoopuser/www/hive-2.3.3/bin/1.txt' into table default.par PARTITION (dt='2008-08-15');
+3. DQL(data query language)操作
 ## 参考文献
 > [1]Tom White.Hadoop权威指南[M].北京:清华大学出版社,第四版.
 
