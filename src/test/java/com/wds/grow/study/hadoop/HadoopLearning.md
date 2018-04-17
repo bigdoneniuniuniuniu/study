@@ -30,25 +30,25 @@ HDFS称为分布式文件系统（Hadoop Distributed Filesystem），有时也�
 		datenode（工作节点）：根据需要存储并检索数据块（受客户端/namenode的调度），并定期向namenode汇报所存储的块的列表。
 	```
 
-3. 交互流程示意图
-	* 客户端读取HDFS文件流程
+###交互流程示意图
+1. 客户端读取HDFS文件流程
 		![客户端读取HDFS流程](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/客户端读取HDFS流程.png)
-		- 步骤1:调用FileSystem的open()打开希望读取的文件。
-		- 步骤2:DistributedFileSystem通过rpc调用namenode，确定文件起始块的位置。对于每个块，namenode返回存有该块副本的datanode的地址。此外，datanode根据它们与客户端的距离来排序。然后返回FSDataInputStream给客户端。
-		- 步骤3:FSDataInputStream调用read()。
-		- 步骤4:连接距离最近的文件中的第一个块所在的datanode，通过对数据流反复调用read()，将数据传输到客户端。
-		- 步骤5:达到块的末端时，DFSInputStream关闭与该datanode的连接，然后寻找下一个块的最佳datanode。
-		- 步骤6:客户端完成读取，close()。
+	- 步骤1:调用FileSystem的open()打开希望读取的文件。
+	- 步骤2:DistributedFileSystem通过rpc调用namenode，确定文件起始块的位置。对于每个块，namenode返回存有该块副本的datanode的地址。此外，datanode根据它们与客户端的距离来排序。然后返回FSDataInputStream给客户端。
+	- 步骤3:FSDataInputStream调用read()。
+	- 步骤4:连接距离最近的文件中的第一个块所在的datanode，通过对数据流反复调用read()，将数据传输到客户端。
+	- 步骤5:达到块的末端时，DFSInputStream关闭与该datanode的连接，然后寻找下一个块的最佳datanode。
+	- 步骤6:客户端完成读取，close()。
 		
-	* 客户端写入HDFS流程图
+2. 客户端写入HDFS流程图
 		![客户端写入HDFS](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/客户端将数据写入HDFS.png)
-		- 步骤1:DistributedFileSystem调用create()
-		- 步骤2:DistributedFileSystem发起rpc调用，在确保该文件夹不存在且客户端有新建该文件夹的权限的一系列校验后，namenode会为创建新文件记录一天记录，并返回FSDataPutputStream对象。
-		- 步骤3:客户端调用write()。
-		- 步骤4：DFSOutputStream将它分成一个个数据包，写入数据队列。DataStreamer挑选出适合存储数据副本的一组datanode。这一组datanode构成一个管线。假设副本数为3，DataStreamer将数据包流式依次从第一个datanode传输到第三个datanode。
-		- 步骤5:DFSOutputStream维护着确认队列，等收到管道中所有datanode的确认信息后，数据包才会从确认队列中删除。
-		- 步骤6:完成数据写入后，close()。
-		- 步骤7:告知namenode文件写入完成。
+	- 步骤1:DistributedFileSystem调用create()
+	- 步骤2:DistributedFileSystem发起rpc调用，在确保该文件夹不存在且客户端有新建该文件夹的权限的一系列校验后，namenode会为创建新文件记录一天记录，并返回FSDataPutputStream对象。
+	- 步骤3:客户端调用write()。
+	- 步骤4：DFSOutputStream将它分成一个个数据包，写入数据队列。DataStreamer挑选出适合存储数据副本的一组datanode。这一组datanode构成一个管线。假设副本数为3，DataStreamer将数据包流式依次从第一个datanode传输到第三个datanode。
+	- 步骤5:DFSOutputStream维护着确认队列，等收到管道中所有datanode的确认信息后，数据包才会从确认队列中删除。
+	- 步骤6:完成数据写入后，close()。
+	- 步骤7:告知namenode文件写入完成。
 	
 ### 搭建
 系统和软件 | 版本号 | 数量
@@ -61,7 +61,7 @@ jdk | 1.8.0_162
 	* 已安装、配置好jdk
 	* 用户使用hadoopuser
 	* 下载文件包放置于/Users/hadoopuser/Downloads
-	* hadoop_home的目录为/Users/hadoopuser/www
+	* hadoop_home的目录为/Users/hadoopuser/www/hadoop-2.8.3
 2. 下载hadoop,解压到约定目录
 	 * brew install wget
 	 * su hadoopuser
@@ -166,9 +166,71 @@ hadoop fs -put #localSrc #dest | 本地文件复制到hdfs的目标文件
 hadoop fs -get #src #localDest | 拷贝hdfs里的文件到本地
 hadoop fs -cat #fileName | 显示文件内容
 
+## hive
+### 远程模式搭建
+系统和软件 | 版本号 | 数量
+----------- | ------- | ---
+MacBook Pro | 10.13.3 mac OS | 1台
+hadoop | 2.8.3 | 
+jdk | 1.8.0_162 | 
+mysql | 5.6.39 | 
+hive | 2.3.3 | 
 
+1. 用户/目录/事先约定
+	* 已安装好jdk、mysql、hadoop环境
+	* 用户使用hadoopuser
+	* 下载文件包放置于/Users/hadoopuser/Downloads
+	* hive_home的目录为/Users/hadoopuser/www/hive-2.3.3
+2. 下载hive、mysql驱动包,解压到约定目录,并把mysql驱动包添加到hive的lib目录下
+	* su hadoopuser
+	* cd /Users/hadoopuser/Downloads
+	* wget http://mirrors.hust.edu.cn/apache/hive/hive-2.3.3/apache-hive-2.3.3-bin.tar.gz
+	* wget https://cdn.mysql.com//Downloads/Connector-J/mysql-connector-java-5.1.46.tar.gz
+	* tar zxvf apache-hive-2.3.3-bin.tar.gz -C /Users/hadoopuser/www/
+	* tar zxvf mysql-connector-java-5.1.46.tar
+	* cd mysql-connector-java-5.1.46
+	* cp mysql-connector-java-5.1.46-bin.jar /Users/hadoopuser/www/hive-2.3.3/lib/
+3. 更改hive-site.xml配置文件
+	* mkdir mkdir /Users/hadoopuser/www/hive-2.3.3/temp（创建临时文件存放路径）
+	* cd /Users/hadoopuser/www/hive-2.3.3/conf
+	* cp hive-default.xml.template hive-site.xml
+	* vim hive-site.xml
+		* 把${system:java.io.tmpdir}全部替换成/Users/hadoopuser/www/hive-2.3.3/temp
+		* 把{system:user.name}全部换成{user.name}
+	* 配置数据库
+
+		```
+			<name>javax.jdo.option.ConnectionURL</name>
+    		<value>jdbc:mysql://127.0.0.1:3306/hive?createDatabaseIfNotExist=true</value>
+    		
+    		<name>javax.jdo.option.ConnectionDriverName</name>
+			<value>com.mysql.jdbc.Driver</value>
+			
+			<name>javax.jdo.option.ConnectionUserName</name>
+ 			<value>hive</value>
+ 			
+			<name>javax.jdo.option.ConnectionPassword</name>
+			<value>hive</value>
+		```			
+4. 创建数据库用户、数据库
+	* /usr/local/mysql/bin
+	* ./mysql -h127.0.0.1 -P3306 -uroot -p
+	* create database hive;
+	* grant all on hive.* to hive@'%'  identified by 'hive';
+	* grant all on hive.* to hive@'localhost'  identified by 'hive';
+	* flush privileges;
+5. 初始化metadata
+	* ./schematool -initSchema -dbType mysql --verbose
+	* 在mysql上查看是否成功
+6. 启动hive
+	* ./hive --service hiveserver2 &
+### shell命令
 ## 参考文献
 > [1]Tom White.Hadoop权威指南[M].北京:清华大学出版社,第四版.
+
+
+
+
 
 
 
