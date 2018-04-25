@@ -60,7 +60,7 @@ public class HdfsApiTest {
      */
     @Test
     public void uploadFile() throws IOException {
-        String fileUri = "/hadoopLearning/test/test.txt";
+        String fileUri = "/var/hive/warehouse/puck.db/bus/tmp_query_result/workflowId=1/batchId=1/data.txt";
         String content = String.format("Hi, %s.So nice day.", "wds");
 
         Path path = new Path(fileUri);
