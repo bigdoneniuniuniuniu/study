@@ -211,8 +211,8 @@ hadoop fs -cat #fileName | 显示文件内容
         peiqi:1
     6.output
 ```
-2. 配图
-    ![MapReduce-wordCount示意图](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MapReduce-wordCount示意图.png)
+2. 配图  
+    ![MapReduce-wordCount示意图.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MapReduce-wordCount示意图.png)
 
 ---
 
