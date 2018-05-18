@@ -46,6 +46,7 @@ public class MrTest {
         job.setReducerClass(IntSumReducer.class);
         job.setCombinerClass(IntSumReducer.class);
 
+        // wordSample.txt文件内容见testData/wordSample.txt
         FileInputFormat.setInputPaths(job, new Path("/mr/wordSample.txt"));
         FileOutputFormat.setOutputPath(job, new Path("/mr/wordCountResult.txt"));
         job.waitForCompletion(true);

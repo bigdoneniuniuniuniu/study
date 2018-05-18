@@ -3,7 +3,6 @@
 
 ## HDFS
 ### 简介
-```
 HDFS称为分布式文件系统（Hadoop Distributed Filesystem），有时也简称为DFS。
 我们可以用以下几个key描述HDFS：
 	- 超大文件
@@ -14,20 +13,19 @@ HDFS称为分布式文件系统（Hadoop Distributed Filesystem），有时也�
 	- 大量的小文件
 	  namenode将文件系统的元数据存储在内存中，因此文件系统所能存储的文件总数受限于namenode的内存容量。
 	- 文件写入只支持单个写入者，写操作总是以“只添加”方式在文件末尾写入数据
-```
 
 ### 概念
 1. 数据块
-	```
-		数据块也称为存储块，是主存储器与输入、输出设备之间进行传输的数据单位，是磁盘进行数据读/写的最小单位。
-		HDFS也有块的概念，默认为128MB。HDFS上的文件也被划分为块大小的多个分块（chunk），作为独立的存储单元。抽象出这样的块会带来很多好处：一个文件的大小可以大雨网络中任意一个磁盘的容量，文件的所有块可以利用集群上的任意一个磁盘进行存储;块适用于数据备份，从而提高数据的容错能力，提高可用性。
-	```
+	
+	数据块也称为存储块，是主存储器与输入、输出设备之间进行传输的数据单位，是磁盘进行数据读/写的最小单位。
+	HDFS也有块的概念，默认为128MB。HDFS上的文件也被划分为块大小的多个分块（chunk），作为独立的存储单元。抽象出这样的块会带来很多好处：一个文件的大小可以大雨网络中任意一个磁盘的容量，文件的所有块可以利用集群上的任意一个磁盘进行存储;块适用于数据备份，从而提高数据的容错能力，提高可用性。
+	
 	
 2. namenode 和 datenode
-	```
-		namenode(管理节点)：管理文件系统的命名空间，维护文件系统树及整棵树内所有的文件和目录，这些信息以命名空间镜像文件和编辑日志文件形式保存在磁盘。此外，还记录着每个文件中各个块所在的数据节点信息。
-		datenode（工作节点）：根据需要存储并检索数据块（受客户端/namenode的调度），并定期向namenode汇报所存储的块的列表。
-	```
+	
+	namenode(管理节点)：管理文件系统的命名空间，维护文件系统树及整棵树内所有的文件和目录，这些信息以命名空间镜像文件和编辑日志文件形式保存在磁盘。此外，还记录着每个文件中各个块所在的数据节点信息。
+	datenode（工作节点）：根据需要存储并检索数据块（受客户端/namenode的调度），并定期向namenode汇报所存储的块的列表。
+	
 
 ### 交互流程示意图
 1. 客户端读取HDFS文件流程
@@ -88,7 +86,16 @@ jdk | 1.8.0_162
   	    <property>
            <name>hadoop.tmp.dir</name>
            <value>/Users/hadoopuser/www/hadoop-2.8.3/tmp</value>
-  		</property>	
+  		</property>
+  		
+  		<property>
+            <name>hadoop.proxyuser.hadoopuser.hosts</name>
+            <value>*</value>
+        </property>
+        <property>
+            <name>hadoop.proxyuser.hadoopuser.groups</name>
+            <value>*</value>
+        </property>
 		```
 	* 修改hdfs-site.xml
 
@@ -172,14 +179,16 @@ hadoop fs -cat #fileName | 显示文件内容
 ---
 
 ## MapReduce
+### 简介
+### 设计
+
 ### 举个栗子🌰
-1. example
-```
-给定一个名称为data.txt的文档，想要统计出这份文档的每个单词的数量。文档数据内容为：  
+1. example  
+  给定一个名称为data.txt的文档，想要统计出这份文档的每个单词的数量。文档数据内容为：  
     tom animal
     wds man
     peiqi animal
-那么运用MapReduce对其进行实现的过程为：
+  那么运用MapReduce对其进行实现的过程为：
     1. input:输入该文档
         tom animal
         wds man
@@ -210,15 +219,24 @@ hadoop fs -cat #fileName | 显示文件内容
         man:1
         peiqi:1
     6.output
-```
 2. 配图  
     ![MapReduce-wordCount示意图.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MapReduce-wordCount示意图.png)
+3. 代码  
+    [MapReduce-wordCount代码demo](https://github.com/wudongsen/study/blob/master/src/test/java/com/wds/grow/study/hadoop/mr/MrTest.java)
+
 
 ---
 
 ## yarn
 
 ## hive
+### 简介  
+hive是基于hadoop之上的数据仓库。主要提供了以下功能：  
+  1. 用来对数据进行提取/转化/加载（ETL）
+  2. 定义简单语言hql，可以在hdfs上进行类sql的curd等操作。屏蔽了编写mr的复杂过程，使得懂sql语言的人就能上手。
+
+### 架构
+### 执行流程
 ### 远程模式搭建
 系统和软件 | 版本号 | 数量
 ----------- | ------- | ---
@@ -328,7 +346,7 @@ hive | 2.3.3 |
 		```
 	* 清空表数据
 	    ```
-		truncate table emp_copy;
+		truncate table par;
 		```
 2. DML(data mainpulation language)操作
 	* 加载本地文件
@@ -337,11 +355,19 @@ hive | 2.3.3 |
 		'/Users/hadoopuser/www/hive-2.3.3/bin/1.txt' into table  
 		default.par PARTITION (dt='2008-08-15');
 		```
-	* insert
+	* insert  
+	    (1)单表：insert (overwrite|into) table `tb_name1` select * from `tb_name2` where_statement;  
+        overwrite:重写;into:append。
 	    ```
 	    insert into test values(1,'22',3);
-	   ```
-	*
-3. DQL(data query language)操作
+	    ```  
+	    (2)多表:FROM `tb_name1` t INSERT OVERWRITE TABLE `tb_name2` PARTITION(dt='2008-06-08') SELECT *
+3. DQL(data query language)操作  
+    * SELECT [ALL | DISTINCT] 字段名, 字段名, …   
+      FROM 表名  
+      [WHERE 条件]  
+      [GROUP BY 列名 [HAVING 条件]]  
+      [ CLUSTER BY 列名 | [DISTRIBUTE BY 列名] [SORT BY | ORDER BY 列名]]  
+      [LIMIT 数字]
 ## 参考文献
 > [1]Tom White.Hadoop权威指南[M].北京:清华大学出版社,第四版.
