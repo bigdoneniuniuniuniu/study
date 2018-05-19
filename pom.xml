@@ -39,17 +39,6 @@
     </dependency>
   </dependencies>
 
-  <distributionManagement>
-    <repository>
-      <id>meitu-nexus-releases</id>
-      <url>http://maven-data.meitu-int.com/nexus/content/repositories/meitu-data-release</url>
-    </repository>
-    <snapshotRepository>
-      <id>meitu-nexus-snapshots</id>
-      <url>http://maven-data.meitu-int.com/nexus/content/repositories/meitu-data-snapshots</url>
-    </snapshotRepository>
-  </distributionManagement>
-
   <build>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
