@@ -280,7 +280,7 @@ hive是基于hadoop之上的数据仓库。主要提供了以下功能：
         行式存储 | 数据存在一起；update、insert容易 | 只想查某几列，该行所有数据也会被读取
         列式存储 | query时只有涉及到的列会被读取；任何列都可作为索引；适合聚集运算；有利于高度压缩 | insert、update麻烦
 
-        ![列式存储-行式存储.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/列式存储-行式存储.png)  
+        ![列式存储-行式存储.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/列式存储-行式存储示意图.png)  
         
 4. UDF
     
