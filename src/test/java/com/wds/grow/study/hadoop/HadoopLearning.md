@@ -312,11 +312,11 @@ hive是基于hadoop之上的数据仓库。主要提供了以下功能：
     * Metastore  
         Metastore主要是在处理hive的元数据的一个组件。提供三种部署方式：
 内嵌模式、本地模式、远程模式。  
-        ![hive部署方式-内嵌模式.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-内嵌模式.png)  
+        ![hive部署方式-内嵌模式.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-内嵌模式.jpg)  
         内嵌模式是Hive Metastore的最简单的部署方式，使用Hive内嵌的Derby数据库来存储元数据。但是Derby只能接受一个Hive会话的访问，试图启动第二个Hive会话就会导致Metastore连接失败。  
-        ![hive部署方式-本地模式.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-本地模式.png)  
+        ![hive部署方式-本地模式.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-本地模式.jpg)  
         本地模式是Metastore的默认模式（懒人专用模式）。该模式下，单Hive会话（一个Hive 服务JVM）以组件方式调用Metastore和Driver。  
-        ![hive部署方式-模式远程.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-远程模式.png)  
+        ![hive部署方式-模式远程.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-远程模式.jpg)  
         远程模式将Metastore分离出来，成为一个独立的Hive服务（Metastore服务还可以部署多个）。这样的模式可以将数据库层完全置于防火墙后，客户就不再需要用户名和密码登录数据库，避免了认证信息的泄漏。
 
 ### 执行流程  
