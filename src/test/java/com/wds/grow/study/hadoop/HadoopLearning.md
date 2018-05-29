@@ -180,7 +180,13 @@ hadoop fs -cat #fileName | 显示文件内容
 
 ## MapReduce
 ### 简介
+大数据时代数据分析的任务往往涉及的数据量巨大，例如想统计用户搜索的关键词。对于大规模的数据处理任务来说，一台电脑明显扛不住，而是应该想办法让多台电脑并行处理。于是，诞生了MapReduce这样的一个编程模型，一个复杂的任务按照这个抽象的模型去实现，就可以有效进行并行计算。
+MapReduce是一种编程模型，用于大规模数据集的并行运算，主要体现了分而治之的程序处理理念。Map和Reduce是它的两个主要思想:  
+    map阶段即映射阶段，该阶段主要负责对数据进行切分处理,即把复杂的任务分解为若干个“简单的任务”来处理。“简单的任务”包含三层含义：一是数据或计算的规模相对原任务要大大缩小；二是就近计算原则，即任务会分配到存放着所需数据的节点上进行计算；三是这些小任务可以并行计算，彼此间几乎没有依赖关系。  
+    reduce阶段即归约阶段，也就是在map阶段的处理结果上进行汇总。  
+MapReduce的根本原则是信息处理的本地化，哪台PC持有相应要处理的数据，哪台PC就负责处理该部分的数据，这样做的意义在于可以减少网络通讯负担。
 ### 设计
+![MapReduce流程图.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MapReduce流程图.jpg)  
 
 ### 举个栗子🌰
 1. example  
@@ -283,10 +289,38 @@ hive是基于hadoop之上的数据仓库。主要提供了以下功能：
         ![列式存储-行式存储.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/列式存储-行式存储示意图.png)  
         
 4. UDF
+    hive中有三种UDF：普通UDF、用户定义聚集函数（user-defined aggregate function，UDAF）、用户定义表生成函数（user-defined table-generating function，UDTF）。  
+    UDF操作作用于单个数据行，且产生一个数据行作为输出。例如：array，map，struct。  
+    UDAF接受多个输入数据行，并产生一个输出数据行。例如sum函数。  
+    UDTF操作作用于单个数据行，且产生多个数据行。 
+
+    实战：
     
 
-### 架构
-### 执行流程
+### 架构  
+![hive架构.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive架构.jpg)
+1. Services
+	* CLI(命令行界面)  
+	    CLI是和Hive交互最简单/常用的方式，只需在具备完整Hive环境下的终端输入hive即可启动服务。
+	* Hive Thtift Server  
+	    Hive Thtift Server基于Thrift开发的，提供rpc接口。
+	* WUI  
+	    http://127.0.0.1:10002
+2. Components
+    * Driver  
+        Driver就是HQL编译器，它解析和优化HQL语句，将其转换成一个Hive Job（可以是MapReduce，也可以是Spark等其他任务）并提交给Hadoop集群。
+    * Metastore  
+        Metastore主要是在处理hive的元数据的一个组件。提供三种部署方式：
+内嵌模式、本地模式、远程模式。  
+        ![hive部署方式-内嵌模式.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-内嵌模式.png)  
+        内嵌模式是Hive Metastore的最简单的部署方式，使用Hive内嵌的Derby数据库来存储元数据。但是Derby只能接受一个Hive会话的访问，试图启动第二个Hive会话就会导致Metastore连接失败。  
+        ![hive部署方式-本地模式.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-本地模式.png)  
+        本地模式是Metastore的默认模式（懒人专用模式）。该模式下，单Hive会话（一个Hive 服务JVM）以组件方式调用Metastore和Driver。  
+        ![hive部署方式-模式远程.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive部署方式-远程模式.png)  
+        远程模式将Metastore分离出来，成为一个独立的Hive服务（Metastore服务还可以部署多个）。这样的模式可以将数据库层完全置于防火墙后，客户就不再需要用户名和密码登录数据库，避免了认证信息的泄漏。
+
+### 执行流程  
+![hive执行流程.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/hive执行流程.png)  
 ### 远程模式搭建
 系统和软件 | 版本号 | 数量
 ----------- | ------- | ---
