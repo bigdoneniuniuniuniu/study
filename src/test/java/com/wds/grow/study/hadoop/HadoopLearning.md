@@ -5,14 +5,14 @@
 ### 简介
 HDFS称为分布式文件系统（Hadoop Distributed Filesystem），有时也简称为DFS。
 我们可以用以下几个key描述HDFS：
-	- 超大文件
-		GB、TB甚至PB级别的数据。
-	- 流式数据访问
-		数据集通常由数据源生成或从数据源复制而来的，然后在长时间在此数据集上进行各种数据分析。因此“一次写入，多次读取”是最高效的访问模式。
-	- 要求低时间延迟数据访问的应用，不适合在HDFS上运行
-	- 大量的小文件
-	  namenode将文件系统的元数据存储在内存中，因此文件系统所能存储的文件总数受限于namenode的内存容量。
-	- 文件写入只支持单个写入者，写操作总是以“只添加”方式在文件末尾写入数据
+- 超大文件
+    GB、TB甚至PB级别的数据。
+- 流式数据访问
+	数据集通常由数据源生成或从数据源复制而来的，然后在长时间在此数据集上进行各种数据分析。因此“一次写入，多次读取”是最高效的访问模式。
+- 要求低时间延迟数据访问的应用，不适合在HDFS上运行
+- 大量的小文件
+  namenode将文件系统的元数据存储在内存中，因此文件系统所能存储的文件总数受限于namenode的内存容量。
+- 文件写入只支持单个写入者，写操作总是以“只添加”方式在文件末尾写入数据
 
 ### 概念
 1. 数据块
@@ -28,7 +28,7 @@ HDFS称为分布式文件系统（Hadoop Distributed Filesystem），有时也�
 	
 
 ### 交互流程示意图
-1. 客户端读取HDFS文件流程
+1. 客户端读取HDFS文件流程  
 		![客户端读取HDFS流程](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/客户端读取HDFS流程.png)
 	- 步骤1:调用FileSystem的open()打开希望读取的文件。
 	- 步骤2:DistributedFileSystem通过rpc调用namenode，确定文件起始块的位置。对于每个块，namenode返回存有该块副本的datanode的地址。此外，datanode根据它们与客户端的距离来排序。然后返回FSDataInputStream给客户端。
@@ -37,7 +37,7 @@ HDFS称为分布式文件系统（Hadoop Distributed Filesystem），有时也�
 	- 步骤5:达到块的末端时，DFSInputStream关闭与该datanode的连接，然后寻找下一个块的最佳datanode。
 	- 步骤6:客户端完成读取，close()。
 		
-2. 客户端写入HDFS流程图
+2. 客户端写入HDFS流程图  
 		![客户端写入HDFS](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/客户端将数据写入HDFS.png)
 	- 步骤1:DistributedFileSystem调用create()
 	- 步骤2:DistributedFileSystem发起rpc调用，在确保该文件夹不存在且客户端有新建该文件夹的权限的一系列校验后，namenode会为创建新文件记录一天记录，并返回FSDataPutputStream对象。
@@ -234,6 +234,32 @@ MapReduce的根本原则是信息处理的本地化，哪台PC持有相应要处
 ---
 
 ## yarn
+### 简介
+由于之前JobTracker和TaskTracker的模型有比较大的缺点：JobTracker存在单点故障，拓展性（scalability）较差。JobTracker要做的事情很多：管理作业、监控状态、担当任务调度器。所以，当集群达到一定规模的数量，JobTracker就吃不消了。于是，yarn就诞生了。  
+yarn（Yet Another Resource Negotiator）是的Hadoop2.0的资源管理系统，可为上层应用提供统一的资源管理和调度。设计的最大的初衷是多租户，并行APP。 
+
+### 设计  
+![yarn架构.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/yarn架构.png)  
+1. ResourceManager(RM)
+    全局资源管理器，负责整个系统的资源管理和分配。由两个组件构成：调度器（Scheduler）和应用管理器（Applications Manager，ASM）。  
+    Scheduler：调度器根据容量、队列等限制条件，将集群中的资源分配给各个正在运行的运用程序。资源分配单位可以用一个抽象概念"资源容器"（container）表示，它将内存、cpu、磁盘、网络等资源抽象出来，从而限定每个任务的使用资源量。  
+    应用程序管理器：负责管理整个系统中的所有应用程序。
+2. NodeManager(NM)  
+    NM是每个节点上的资源和任务管理器。主要做以下工作：定时地向RM汇报本节点上的资源使用情况和各个container的运行情况、接收并处理AM的请求。
+3. ApplicationMaster(AM)  
+    用户提交上来的每个application均包含一个AM。主要是：以container的方式与RM调度器协调以获取资源、与NM通信来start/stop任务。
+
+### 执行流程
+![yarn执行流程.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/yarn执行流程.png) 
+主要分2个阶段：1、启动ApplicationMaster；2、创建ApplicationMaster，并为ApplicationMaster申请资源，并监控整个运行过程。  
+细分成以下几个步骤：  
+1. 向yarn中提交应用程序
+2. RM为该应用程序分配一个container，并与NM通讯，要求它在这个container中启动AM
+3. AM采用轮训方式通过RPC向RM申请和领取资源
+4. 一旦AM申请到资源后，便与NM通讯，要求它启动任务
+5. NM为任务设置好运行环境，将任务启动命令写到一个脚本中，并通过运行该脚本启动任务。
+6. 各个任务通过RPC向AM汇报状态和进度，
+7. 任务执行完后，AM向RM注销并关闭自己
 
 ## hive
 ### 简介  
