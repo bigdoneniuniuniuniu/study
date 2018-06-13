@@ -192,8 +192,8 @@ MapReduce的根本原则是信息处理的本地化，哪台PC持有相应要处
 - taskTracker：运行作业划分后的任务
 - HDFS：共享作业文件
 
-具体执行流程如下：
-![MR1执行流程.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MR1执行流程.png)  
+具体执行流程如下：  
+![MR1执行流程.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MR1执行流程.png)
 1. 作业submit后，waitForCompletion()每秒轮询作业的进度，报告进度到客户端
 2. 向jobTracker申请一个作业Id
 3. 将作业运行所需的资源复制到一个以作业Id命名的目录下的文件系统中
@@ -206,7 +206,14 @@ MapReduce的根本原则是信息处理的本地化，哪台PC持有相应要处
 10. 运行任务
 
 ### 设计
-![MapReduce流程图.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MapReduce流程图.jpg)  
+![MapReduce流程图.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MapReduce流程图.jpg)
+Shuffle： Mapper的输出排序，然后传送到Reducer的整个过程。 
+- Map-Shuffle：
+    - 环形Buffer缓冲区：每一个任务有一个环形Buffer，map将这个输出写入到这个Buffer。环形Buffer是内存中的一种首尾相连的数据结构，用来存储key-value格式的数据。环形缓冲其实就是一个字节数组byte[] kvbuffer,kvbuffer包含数据区和索引区，这两个区是相邻不重叠的区域，用一个分界点来标识。分界点随着spill而变更。初始分界点为0，数据存储方向为向上增长，索引存储方向向下。索引是对key-value在kvbuffer中的索引，是个四元组，占用四个Int长度，包括：value的起始位置、key的起始位置、partition值、value的长度。该缓冲区默认大小为100M。
+    - spill：map将输出不断写入到这个缓冲区中，当缓冲区使用量达到一定比例之后，一个后台线程开始把缓冲区的数据写入磁盘，这个过程叫spill。写入之前，后台线程把数据按照他们将送往的reducer进行划分，使用Hash算法来分区。并且针对每部分数据，使用快排对key进行排序。如果有一个combiner，会在排序后的输出上运行，使得输出结果更紧凑，减少写到磁盘的数据和传给reducer的数据。每次内存缓冲区达到spill阀值时，会新建一个spill file，因此在map任务写完其最后一个输出记录之后，会有几个溢出文件。任务完成之前，溢出文件被合并成一个已分区且已排序的输出文件。任务完成后，会通知Application Master，以便reducer能够及时来拉取数据。
+- Reduce-Shuffle：
+    - map输出文件位于运行map任务的tasktracker的本地磁盘，现在，tasktracker需要为分区文件运行reduce任务。而且，reduce任务需要集群上若干个map任务的map输出作为其特殊的分区文件。每个map任务完成的时间不同，因此只要有一个任务完成，reduce就开始复制其输出。复制完map输出后，reduce进入sort阶段，合并map输出。最后，直接把数据输入到reduce函数。
+
 
 ### 举个栗子🌰
 1. example  
