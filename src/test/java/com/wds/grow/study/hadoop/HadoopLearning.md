@@ -185,6 +185,26 @@ MapReduce是一种编程模型，用于大规模数据集的并行运算，主�
     map阶段即映射阶段，该阶段主要负责对数据进行切分处理,即把复杂的任务分解为若干个“简单的任务”来处理。“简单的任务”包含三层含义：一是数据或计算的规模相对原任务要大大缩小；二是就近计算原则，即任务会分配到存放着所需数据的节点上进行计算；三是这些小任务可以并行计算，彼此间几乎没有依赖关系。  
     reduce阶段即归约阶段，也就是在map阶段的处理结果上进行汇总。  
 MapReduce的根本原则是信息处理的本地化，哪台PC持有相应要处理的数据，哪台PC就负责处理该部分的数据，这样做的意义在于可以减少网络通讯负担。
+### 工作机制  
+经典的MR最顶层包含了4个独立的实体：
+- 客户端：用来提交MR作业
+- jobTracker：协调作业的运行，存在单点故障
+- taskTracker：运行作业划分后的任务
+- HDFS：共享作业文件
+
+具体执行流程如下：
+![MR1执行流程.png](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MR1执行流程.png)  
+1. 作业submit后，waitForCompletion()每秒轮询作业的进度，报告进度到客户端
+2. 向jobTracker申请一个作业Id
+3. 将作业运行所需的资源复制到一个以作业Id命名的目录下的文件系统中
+4. 提交job，告知jobTracker作业准备执行
+5. jobTracker把作业放入内部queue中，并交给scheduler进行调度
+6. 作业调度器从hdfs获取客户端已经计算好的输入分片
+7. taskTracker运行一个简单的循环定期发送heartbeat给jobTracker，这样做的目的是：告知jobTracker‘我’还活着、作为通道，jobTracker可为‘我’分配任务
+8. 获取执行job所需要的资源，实现资源本地化
+9. taskRunner启动一个新的JVM来运行任务，以便其他软件不会影响到taskTracker
+10. 运行任务
+
 ### 设计
 ![MapReduce流程图.jpg](https://raw.githubusercontent.com/wudongsen/study/master/src/test/docImages/MapReduce流程图.jpg)  
 
